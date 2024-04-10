@@ -5,6 +5,10 @@ import com.opencsv.CSVReader;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -16,10 +20,12 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+
 public class Main {
-    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
+    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException, ParseException {
 
         String[] columnMapping = {"id", "firstName", "lastName", "country", "age"};
         String fileName = "data.csv";
@@ -35,9 +41,39 @@ public class Main {
         String output1FileName = "data1.json";
         writeString(json, outputFileName);
         writeString(json1, output1FileName);
+
+        String json2 = readString("data1.json");
+        List<Employee> list2 = jsonToList(json);
+        System.out.println(Arrays.toString(list2.toArray()));
+
     }
 
-    private static List<Employee> parseXML(String fileName) throws ParserConfigurationException, IOException, SAXException {
+    public static List<Employee> jsonToList(String json) throws ParseException {
+        List<Employee> employees = new ArrayList<>();
+        JSONParser parser = new JSONParser();
+        Gson gson = new GsonBuilder().create();
+
+        JSONArray jsonArray = (JSONArray) parser.parse(json);
+        for (Object objects : jsonArray) {
+            JSONObject jsonObject = (JSONObject) objects;
+            Employee employee = gson.fromJson(jsonObject.toJSONString(), Employee.class);
+            employees.add(employee);
+        }
+        return employees;
+    }
+
+    public static String readString(String jsonFile) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(jsonFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    public static List<Employee> parseXML(String fileName) throws ParserConfigurationException, IOException, SAXException {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(new File(fileName));
